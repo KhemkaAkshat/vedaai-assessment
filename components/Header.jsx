@@ -4,7 +4,6 @@ import Image from "next/image";
 import {
   ArrowLeft,
   Bell,
-  BookOpen,
   ChevronDown,
   ClipboardPen,
   HelpCircle,

@@ -5,18 +5,25 @@ const ai = new GoogleGenAI({
 });
 
 export async function extractQuestions(file) {
-  // Convert Next.js File -> Blob
+  // ==========================================
+  // 1. CONVERT NEXT.JS FILE -> BLOB
+  // ==========================================
+
   const arrayBuffer = await file.arrayBuffer();
 
   const pdfBlob = new Blob([arrayBuffer], {
     type: "application/pdf",
   });
 
-  console.log("Uploading PDF to Gemini...");
+  console.log("Uploading question paper to Gemini...");
 
-  // Upload using Gemini Files API
+  // ==========================================
+  // 2. UPLOAD PDF TO GEMINI
+  // ==========================================
+
   const uploadedFile = await ai.files.upload({
     file: pdfBlob,
+
     config: {
       mimeType: "application/pdf",
       displayName: file.name,
@@ -30,14 +37,17 @@ export async function extractQuestions(file) {
     state: uploadedFile.state,
   });
 
-  // Wait until Gemini finishes processing the file
+  // ==========================================
+  // 3. WAIT FOR PROCESSING
+  // ==========================================
+
   let processedFile = uploadedFile;
 
   while (
     processedFile.state &&
     processedFile.state.toString().includes("PROCESSING")
   ) {
-    console.log("Gemini is processing the PDF...");
+    console.log("Gemini is processing the question paper...");
 
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -46,48 +56,303 @@ export async function extractQuestions(file) {
     });
   }
 
-  console.log("Gemini file state:", processedFile.state);
+  console.log("Gemini question paper state:", processedFile.state);
 
   if (
     processedFile.state &&
     processedFile.state.toString().includes("FAILED")
   ) {
-    throw new Error("Gemini failed to process the PDF.");
+    throw new Error("Gemini failed to process the question paper.");
   }
 
+  // ==========================================
+  // 4. EXTRACTION PROMPT
+  // ==========================================
+
   const prompt = `
-You are analyzing a school examination question paper.
+You are extracting questions from a school examination question paper.
 
-IMPORTANT:
-You MUST extract questions ONLY from the uploaded PDF.
-Do not use outside knowledge.
-Do not invent questions.
-Do not replace the document with another similar question paper.
+This is a DOCUMENT EXTRACTION task.
 
-First inspect the entire PDF.
+Use ONLY the uploaded PDF.
 
-Extract EVERY actual question from the document.
+Do NOT use outside knowledge.
 
-Rules:
+Do NOT invent questions.
 
-1. Preserve the exact printed question number.
-2. Preserve the original printed order.
-3. Treat labelled sub-parts as separate questions.
-4. Include the complete question text.
-5. Preserve mathematical expressions as accurately as possible.
-6. Extract marks when they are explicitly visible.
-7. Detect whether the question contains or refers to a diagram/figure.
-8. Do not treat headings, instructions, page numbers or general information as questions.
-9. Do not invent missing questions.
-10. The answer must be based ONLY on this PDF.
+Do NOT replace this paper with another similar paper.
 
-Before producing the final JSON, internally verify that:
-- the first question matches the first question in the PDF
-- the last question matches the last question in the PDF
-- the question numbers are in the same order as the PDF.
+Read and inspect the ENTIRE PDF before producing the result.
 
-Return the extracted questions.
+==================================================
+LANGUAGE — VERY IMPORTANT
+==================================================
+
+The PDF may contain both English and Hindi versions.
+
+EXTRACT ONLY THE ENGLISH VERSION.
+
+Completely IGNORE Hindi.
+
+Do NOT:
+
+- extract Hindi questions
+- translate Hindi into English
+- combine Hindi and English
+- duplicate questions because both languages exist
+- use Hindi text to reconstruct missing English text
+
+Every extracted question must come from the English portion.
+
+==================================================
+TOP-LEVEL QUESTION COUNT
+==================================================
+
+This examination paper contains EXACTLY 33 top-level questions.
+
+The top-level questions are:
+
+1
+2
+3
+4
+...
+33
+
+Your output MUST contain exactly 33 question objects.
+
+ONLY a new printed top-level number such as:
+
+1.
+2.
+3.
+...
+33.
+
+can create a new object in the questions array.
+
+==================================================
+SUBPARTS
+==================================================
+
+The following are NOT new top-level questions:
+
+(a)
+(b)
+(c)
+(i)
+(ii)
+(iii)
+(iv)
+
+They are subparts of the current question.
+
+For example:
+
+17. (a) Calculate ...
+    OR
+    (b) Calculate ...
+
+This is ONE question:
+
+number = "17"
+
+NOT:
+
+17
+18
+
+Similarly:
+
+22. (a)
+      (i) ...
+      (ii) ...
+      (iii) ...
+
+    OR
+
+    (b)
+      (i) ...
+      (ii) ...
+      (iii) ...
+
+This is STILL ONE question:
+
+number = "22"
+
+==================================================
+OR / अथवा
+==================================================
+
+"OR" and "अथवा" indicate an alternative.
+
+They NEVER create a new top-level question.
+
+Keep both alternatives inside the text of the SAME question.
+
+For example:
+
+Question 17:
+
+(a) English alternative A
+
+OR
+
+(b) English alternative B
+
+should become:
+
+{
+  "number": "17",
+  "text": "(a) English alternative A\\nOR\\n(b) English alternative B"
+}
+
+Do NOT create another question object.
+
+==================================================
+QUESTION NUMBER
+==================================================
+
+Preserve the printed top-level question number.
+
+The output should contain:
+
+1, 2, 3, ... 33
+
+Do not use:
+
+1(a)
+1(b)
+22(i)
+22(ii)
+
+as top-level question numbers.
+
+The question number field represents ONLY the top-level question.
+
+==================================================
+QUESTION TEXT
+==================================================
+
+Include the COMPLETE English question.
+
+Preserve:
+
+- mathematical expressions
+- equations
+- symbols
+- fractions
+- powers
+- roots
+- units
+- diagrams references
+- tables
+- graphs
+- subparts
+- alternatives
+- OR statements
+
+Do NOT summarize.
+
+Do NOT shorten.
+
+Do NOT rewrite the question.
+
+Preserve the original wording as closely as possible.
+
+==================================================
+DIAGRAMS
+==================================================
+
+Set:
+
+hasDiagram = true
+
+if the question contains or refers to:
+
+- geometry diagrams
+- graphs
+- charts
+- tables
+- figures
+- maps
+- circuits
+- images
+- visual data
+
+Otherwise:
+
+hasDiagram = false.
+
+Do not invent diagrams.
+
+==================================================
+MARKS
+==================================================
+
+Extract marks only when explicitly visible.
+
+If marks cannot be confidently identified:
+
+marks = null
+
+Never guess marks.
+
+==================================================
+HEADINGS / INSTRUCTIONS
+==================================================
+
+Do NOT treat the following as questions:
+
+- section headings
+- general instructions
+- page numbers
+- school name
+- examination name
+- time/duration
+- maximum marks
+- Hindi translations
+- OR / अथवा
+- subpart labels
+
+==================================================
+FINAL VALIDATION
+==================================================
+
+Before returning the final JSON, internally verify:
+
+1. Only English was extracted.
+
+2. Hindi was ignored.
+
+3. There are exactly 33 top-level questions.
+
+4. The first object corresponds to printed question 1.
+
+5. The last object corresponds to printed question 33.
+
+6. Question numbers are in printed order.
+
+7. No subpart became a separate question.
+
+8. No OR became a separate question.
+
+9. No अथवा became a separate question.
+
+10. The Hindi version did not create duplicate questions.
+
+11. No question was invented.
+
+12. No question was omitted.
+
+If you cannot confidently identify a question, do not invent it.
+
+Return ONLY the JSON.
 `;
+
+  // ==========================================
+  // 5. GEMINI REQUEST
+  // ==========================================
 
   const response = await ai.models.generateContent({
     model: "gemini-3.6-flash",
@@ -140,12 +405,7 @@ Return the extracted questions.
                 },
               },
 
-              required: [
-                "number",
-                "text",
-                "order",
-                "hasDiagram",
-              ],
+              required: ["number", "text", "order", "hasDiagram"],
             },
           },
         },
@@ -155,7 +415,79 @@ Return the extracted questions.
     },
   });
 
-  return JSON.parse(response.text);
+  // ==========================================
+  // 6. PARSE RESPONSE
+  // ==========================================
+
+  const result = JSON.parse(response.text);
+
+  const questions = result.questions || [];
+
+  // ==========================================
+  // 7. VALIDATE COUNT
+  // ==========================================
+
+  const expectedQuestionCount = 33;
+
+  const questionCountValid = questions.length === expectedQuestionCount;
+
+  if (questionCountValid) {
+    console.log(
+      `✅ Extracted exactly ${questions.length} top-level questions.`,
+    );
+  } else {
+    console.warn(
+      `⚠️ Question count mismatch. Expected ${expectedQuestionCount}, got ${questions.length}.`,
+    );
+  }
+
+  // ==========================================
+  // 8. VALIDATE NUMBERING
+  // ==========================================
+
+  const extractedNumbers = questions.map((question) =>
+    String(question.number).trim(),
+  );
+
+  const expectedNumbers = Array.from(
+    { length: expectedQuestionCount },
+    (_, index) => String(index + 1),
+  );
+
+  const numberingValid =
+    JSON.stringify(extractedNumbers) === JSON.stringify(expectedNumbers);
+
+  if (numberingValid) {
+    console.log("✅ Question numbering is correct: 1-33");
+  } else {
+    console.warn("⚠️ Question numbering mismatch.", {
+      expected: expectedNumbers,
+      received: extractedNumbers,
+    });
+  }
+
+  // ==========================================
+  // 9. DEBUG OUTPUT
+  // ==========================================
+
+  console.log("Extracted top-level question numbers:", extractedNumbers);
+
+  // ==========================================
+  // 10. RETURN
+  // ==========================================
+
+  return {
+    questions,
+    questionCount: questions.length,
+    expectedQuestionCount,
+    questionCountValid,
+    numberingValid,
+
+    warning:
+      !questionCountValid || !numberingValid
+        ? "Question extraction requires review."
+        : null,
+  };
 }
 
 export async function extractAnswers(file) {
