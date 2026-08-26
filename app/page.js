@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import Image from "next/image";
-
 import { ArrowRight } from "lucide-react";
 
 import Sidebar from "@/components/Sidebar";
@@ -12,32 +10,52 @@ import UploadCard from "@/components/UploadCard";
 import ExtractionScreen from "@/components/ExtractionScreen";
 import AssessmentWorkspace from "@/components/AssessmentWorkspace";
 
+import { saveFile, getFile, deleteFile } from "@/lib/fileStorage";
+
 export default function Home() {
-  const [questionPaper, setQuestionPaper] =
-    useState(null);
+  const [questionPaper, setQuestionPaper] = useState(null);
+  const [answerSheet, setAnswerSheet] = useState(null);
 
-  const [answerSheet, setAnswerSheet] =
-    useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState("");
 
-  const [processing, setProcessing] =
-    useState(false);
-
-  const [processingStep, setProcessingStep] =
-    useState("");
-
-  const [assessmentStarted, setAssessmentStarted] =
-    useState(false);
+  const [assessmentStarted, setAssessmentStarted] = useState(false);
 
   const [questions, setQuestions] = useState([]);
-
   const [answers, setAnswers] = useState([]);
 
-  const [selectedQuestion, setSelectedQuestion] =
-    useState(null);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
 
-  /* ================= FILE UPLOAD ================= */
+  /* ==================================================
+     RESTORE FILES FROM INDEXEDDB
+  ================================================== */
 
-  const handleFileChange = (event, type) => {
+  useEffect(() => {
+    const restoreFiles = async () => {
+      try {
+        const storedQuestionPaper = await getFile("questionPaper");
+        const storedAnswerSheet = await getFile("answerSheet");
+
+        if (storedQuestionPaper) {
+          setQuestionPaper(storedQuestionPaper);
+        }
+
+        if (storedAnswerSheet) {
+          setAnswerSheet(storedAnswerSheet);
+        }
+      } catch (error) {
+        console.error("Failed to restore uploaded files:", error);
+      }
+    };
+
+    restoreFiles();
+  }, []);
+
+  /* ==================================================
+     FILE UPLOAD
+  ================================================== */
+
+  const handleFileChange = async (event, type) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -52,31 +70,73 @@ export default function Home() {
     /* File type validation */
 
     if (!allowedTypes.includes(file.type)) {
-      alert(
-        "Please upload a PDF, PNG, or JPG file."
-      );
-
+      alert("Please upload a PDF, PNG, or JPG file.");
       event.target.value = "";
-
       return;
     }
 
     /* 100MB validation */
 
     if (file.size > 100 * 1024 * 1024) {
-      alert(
-        "File size must be less than 100MB."
-      );
-
+      alert("File size must be less than 100MB.");
       event.target.value = "";
-
       return;
     }
 
+    /* ==================================================
+       QUESTION PAPER
+    ================================================== */
+
     if (type === "question") {
       setQuestionPaper(file);
-    } else {
+
+      try {
+        await saveFile("questionPaper", file);
+
+        localStorage.setItem(
+          "questionPaperMeta",
+          JSON.stringify({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: file.lastModified,
+          })
+        );
+      } catch (error) {
+        console.error("Failed to save question paper:", error);
+
+        alert(
+          "The file was selected but could not be saved locally."
+        );
+      }
+    }
+
+    /* ==================================================
+       ANSWER SHEET
+    ================================================== */
+
+    else {
       setAnswerSheet(file);
+
+      try {
+        await saveFile("answerSheet", file);
+
+        localStorage.setItem(
+          "answerSheetMeta",
+          JSON.stringify({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: file.lastModified,
+          })
+        );
+      } catch (error) {
+        console.error("Failed to save answer sheet:", error);
+
+        alert(
+          "The file was selected but could not be saved locally."
+        );
+      }
     }
 
     /*
@@ -86,24 +146,36 @@ export default function Home() {
     event.target.value = "";
   };
 
-  /* ================= REMOVE FILE ================= */
+  /* ==================================================
+     REMOVE FILE
+  ================================================== */
 
-  const removeFile = (type) => {
-    if (type === "question") {
-      setQuestionPaper(null);
-    } else {
-      setAnswerSheet(null);
+  const removeFile = async (type) => {
+    try {
+      if (type === "question") {
+        setQuestionPaper(null);
+
+        await deleteFile("questionPaper");
+
+        localStorage.removeItem("questionPaperMeta");
+      } else {
+        setAnswerSheet(null);
+
+        await deleteFile("answerSheet");
+
+        localStorage.removeItem("answerSheetMeta");
+      }
+    } catch (error) {
+      console.error("Failed to remove stored file:", error);
     }
   };
 
-  /* ================= START MAPPING ================= */
+  /* ==================================================
+     START MAPPING
+  ================================================== */
 
   const handleStartMapping = async () => {
-    if (
-      !questionPaper ||
-      !answerSheet ||
-      processing
-    ) {
+    if (!questionPaper || !answerSheet || processing) {
       return;
     }
 
@@ -114,9 +186,7 @@ export default function Home() {
          1. EXTRACT QUESTIONS
       ========================================== */
 
-      setProcessingStep(
-        "Extracting questions..."
-      );
+      setProcessingStep("Extracting questions...");
 
       const questionFormData = new FormData();
 
@@ -208,11 +278,13 @@ export default function Home() {
        * The actual File object can be passed
        * directly to PdfViewer.
        */
+
       setAnswerSheet(answerSheet);
 
       /*
        * No question should be selected initially.
        */
+
       setSelectedQuestion(null);
 
       /* ==========================================
@@ -223,8 +295,15 @@ export default function Home() {
         "Preparing assessment..."
       );
 
-      setAssessmentStarted(true);
+      /*
+       * IMPORTANT:
+       * Stop the extraction screen before
+       * showing the assessment workspace.
+       */
 
+      setProcessing(false);
+
+      setAssessmentStarted(true);
     } catch (error) {
       console.error(
         "Assessment processing error:",
@@ -241,16 +320,21 @@ export default function Home() {
     }
   };
 
+  /* ==================================================
+     START BUTTON STATE
+  ================================================== */
+
   const canStart =
     questionPaper &&
     answerSheet &&
     !processing;
 
-  /* ================= MAIN UI ================= */
+  /* ==================================================
+     MAIN UI
+  ================================================== */
 
   return (
     <main className="min-h-screen bg-[#f7f7f7] text-[#292929]">
-
       <div className="flex min-h-screen">
 
         {/* ================= SIDEBAR ================= */}
@@ -282,12 +366,8 @@ export default function Home() {
               questions={questions}
               answers={answers}
               answerSheet={answerSheet}
-              selectedQuestion={
-                selectedQuestion
-              }
-              onSelectQuestion={
-                setSelectedQuestion
-              }
+              selectedQuestion={selectedQuestion}
+              onSelectQuestion={setSelectedQuestion}
             />
 
           ) : (
@@ -305,14 +385,11 @@ export default function Home() {
                 <div className="text-center">
 
                   <h1 className="text-[27px] font-semibold tracking-[-1.2px] text-[#292929] md:text-[46px]">
-
                     Upload{" "}
 
                     <span className="rounded-[7px] bg-[#fff0e8] px-1.5 text-[#ff6337]">
-                      Question Paper &amp;
-                      Answer Sheets
+                      Question Paper &amp; Answer Sheets
                     </span>
-
                   </h1>
 
                   <p className="mt-2 text-[13px] text-[#555] md:text-[14px]">
@@ -375,7 +452,6 @@ export default function Home() {
                         : "cursor-not-allowed bg-[#bdbdbd] text-[#e9e9e9]"
                     }`}
                   >
-
                     Start Mapping
 
                     <ArrowRight
@@ -390,16 +466,17 @@ export default function Home() {
                 {/* ================= HELPER TEXT ================= */}
 
                 <p className="mx-auto mt-3 max-w-[420px] text-center text-[10px] leading-4 text-[#999] md:text-[11px]">
-                  Once both files are uploaded,
-                  you&apos;ll be able to map
-                  answers with questions
+                  Once both files are uploaded, you&apos;ll be
+                  able to map answers with questions
                 </p>
 
               </div>
+
             </div>
           )}
 
         </section>
+
       </div>
     </main>
   );
