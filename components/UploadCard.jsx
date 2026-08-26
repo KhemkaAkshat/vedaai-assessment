@@ -72,7 +72,7 @@ export default function UploadCard({
           </p>
 
           <p className="mt-1 text-[9px] text-[#aaa]">
-            Max 10MB
+            Max 100MB
           </p>
 
           <input
