@@ -32,7 +32,7 @@ export default function Header() {
             alt="VedaAI"
             width={74}
             height={28}
-            className="h-auto w-[74px]"
+            className="h-auto w-[20px]"
           />
         </div>
 
