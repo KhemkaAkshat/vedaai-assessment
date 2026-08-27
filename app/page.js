@@ -297,7 +297,7 @@ export default function Home() {
   ================================================== */
 
   return (
-    <main className="min-h-screen bg-[#f7f7f7] text-[#292929]">
+    <main className="min-h-screen text-[#292929]">
       <div className="flex min-h-screen">
         {/* ================= SIDEBAR ================= */}
 
@@ -336,7 +336,7 @@ export default function Home() {
                UPLOAD STATE
             ================================================== */
 
-            <div className="flex min-h-[100vh] items-start justify-center px-4 pb-10 pt-10 md:px-8 md:pt-[44px]">
+            <div className="flex min-h-[80vh] items-start justify-center px-4 pb-10 pt-10 md:px-8 md:pt-[44px]">
               <div className="w-full max-w-[1100px]">
                 {/* ================= HEADING ================= */}
 
@@ -355,8 +355,8 @@ export default function Home() {
 
                 {/* ================= TEACHER IMAGE ================= */}
 
-                <div className="mt-5 flex justify-center md:mt-4">
-                  <div className="relative h-25 w-25">
+                <div className="mt-5 flex justify-center md:mt-6">
+                  <div className="relative h-30 w-30">
                     <Image
                       src="/images/teacher.png"
                       alt="AI Teacher"
@@ -369,7 +369,7 @@ export default function Home() {
 
                 {/* ================= UPLOAD CARDS ================= */}
 
-                <div className="mx-auto mt-3 grid w-full max-w-full gap-3 rounded-[20px] bg-white p-[9px] md:max-w-[80%] md:grid-cols-2 md:gap-[10px]">
+                <div className="mx-auto mt-3 grid w-full max-w-full gap-3 rounded-[20px] bg-[#FFFFFF80] p-3 md:max-w-[80%] md:grid-cols-2 md:gap-3">
                   <UploadCard
                     title="Question Paper"
                     type="question"

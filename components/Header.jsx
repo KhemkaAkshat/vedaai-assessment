@@ -14,7 +14,7 @@ import {
 
 export default function Header() {
   return (
-    <header className="mx-3 mt-3 flex h-[46px] items-center justify-between rounded-[16px] bg-white px-4 md:mx-0 md:mr-5 md:mt-3 md:h-[60px]">
+    <header className="mx-3 mt-3 flex h-[46px] items-center justify-between rounded-[16px] bg-[#ffffff75] px-4 md:mx-0 md:mr-5 md:mt-3 md:h-[60px] shadow-sm">
       {/* Left */}
       <div className="flex items-center gap-3">
         <button

@@ -10,12 +10,13 @@ import {
   Sparkles,
   PanelLeft,
   ClipboardPen,
+  University,
 } from "lucide-react";
 
 export default function Sidebar({ collapsed = false, onToggle }) {
   return (
-    <aside className={`hidden shrink-0 p-2 transition-[width] duration-200 md:block ${collapsed ? "w-[72px]" : "w-[20%]"}`}>
-      <div className={`flex h-[calc(100vh-20px)] flex-col rounded-[18px] bg-white py-6 shadow-md transition-[padding] duration-200 ${collapsed ? "items-center px-2" : "px-7"}`}>
+    <aside className={`hidden shrink-0 px-3 mt-3 transition-[width] duration-200 md:block ${collapsed ? "w-22" : "w-[22%]"}`}>
+      <div className={`flex h-[calc(100vh-20px)] flex-col rounded-2xl bg-white py-6 shadow-2xl transition-[padding] duration-200 ${collapsed ? "items-center px-2" : "px-7"}`}>
         {/* Logo */}
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           <div className="flex items-center justify-center gap-2">
@@ -66,15 +67,15 @@ export default function Sidebar({ collapsed = false, onToggle }) {
 
         {/* Bottom */}
         <div className="mt-auto">
-          <button aria-label="Settings" className={`mb-5 flex items-center py-2 text-left text-[13px] text-[#777] ${collapsed ? "justify-center items-center" : "w-full gap-3 px-3"}`}>
+          <button aria-label="Settings" className={`mb-5 flex items-center py-2 text-left text-[13px] text-[#777] ${collapsed ? "justify-center items-center " : "w-full gap-3 px-3"}`}>
             <Settings size={18} strokeWidth={1.7} />
             {!collapsed && "Settings"}
           </button>
 
           {/* School */}
           <div className={`flex items-center rounded-[14px] bg-[#f1f1f1] py-3 ${collapsed ? "justify-center px-1" : "gap-3 px-3"}`}>
-            <div className="flex h-[45px] w-[45px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
-              <span className="text-[20px] text-[#4d8754]">✺</span>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white">
+              <University size={24}/>
             </div>
 
             {!collapsed && <div className="min-w-0">

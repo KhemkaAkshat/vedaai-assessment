@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function ExtractionScreen() {
   return (
-    <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-[#f7f7f7]">
+    <div className="flex min-h-[calc(100vh-90px)] items-center justify-center bg-white mt-2 rounded-xl">
       <div className="flex flex-col items-center justify-center">
         {/* ================= EXTRACTION IMAGE ================= */}
         <div className="relative mb-6 h-30 w-30">

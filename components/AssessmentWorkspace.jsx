@@ -427,7 +427,7 @@ export default function AssessmentWorkspace({
    */
 
   return (
-    <div className="mt-4 flex h-[calc(100vh-72px)] min-h-0 flex-col bg-[#eeeeec]">
+    <div className="mt-4 flex h-[calc(100vh-72px)] min-h-0 flex-col">
 
       <div className="flex shrink-0 items-center gap-1 border-b border-[#e5e5e5] bg-white rounded-full p-2 mx-2 mb-2 shadow-xl md:hidden">
         <button
