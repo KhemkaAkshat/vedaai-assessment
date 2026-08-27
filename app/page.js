@@ -369,7 +369,7 @@ export default function Home() {
 
                 {/* ================= UPLOAD CARDS ================= */}
 
-                <div className="mx-auto mt-3 grid max-w-[80%] gap-3 rounded-[20px] bg-white p-[9px] md:grid-cols-2 md:gap-[10px]">
+                <div className="mx-auto mt-3 grid w-full max-w-full gap-3 rounded-[20px] bg-white p-[9px] md:max-w-[80%] md:grid-cols-2 md:gap-[10px]">
                   <UploadCard
                     title="Question Paper"
                     type="question"

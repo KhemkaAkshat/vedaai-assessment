@@ -45,6 +45,12 @@ export default function AssessmentWorkspace({
   const [gradingEnabled, setGradingEnabled] =
     useState(false);
 
+  const [fullGradingStatus, setFullGradingStatus] =
+    useState("idle");
+
+  const [mobileView, setMobileView] =
+    useState("questions");
+
   /*
    * ==========================================
    * NORMALIZE QUESTION NUMBERS
@@ -202,6 +208,79 @@ export default function AssessmentWorkspace({
     }
   };
 
+  const gradeFullAssessment = async () => {
+    if (
+      fullGradingStatus === "grading" ||
+      !gradeableQuestions.length
+    ) {
+      return;
+    }
+
+    setFullGradingStatus("grading");
+
+    try {
+      const response = await fetch(
+        "/api/grade-full-assessment",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            questions,
+            answers,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error ||
+            "Failed to grade the full assessment.",
+        );
+      }
+
+      const results = data.result?.results || [];
+      const resultsByKey = Object.fromEntries(
+        results.map((result) => [
+          normalizeQuestionNumber(
+            result.questionNumber,
+          ),
+          result,
+        ]),
+      );
+
+      setGradingResults((previous) => ({
+        ...previous,
+        ...resultsByKey,
+      }));
+
+      setGradingStatus((previous) => {
+        const next = { ...previous };
+
+        results.forEach((result) => {
+          next[
+            normalizeQuestionNumber(
+              result.questionNumber,
+            )
+          ] = "graded";
+        });
+
+        return next;
+      });
+
+      setFullGradingStatus("complete");
+    } catch (error) {
+      console.error(
+        "Failed to grade full assessment:",
+        error,
+      );
+      setFullGradingStatus("error");
+    }
+  };
+
   /*
    * ==========================================
    * HANDLE QUESTION SELECTION
@@ -350,76 +429,45 @@ export default function AssessmentWorkspace({
   return (
     <div className="mt-4 flex h-[calc(100vh-72px)] min-h-0 flex-col bg-[#eeeeec]">
 
-      {/* ==========================================
-          GRADING SUMMARY
-          ========================================== */}
+      <div className="flex shrink-0 items-center gap-1 border-b border-[#e5e5e5] bg-white rounded-full p-2 mx-2 mb-2 shadow-xl md:hidden">
+        <button
+          type="button"
+          aria-pressed={mobileView === "questions"}
+          onClick={() => setMobileView("questions")}
+          className={`flex-1 rounded-full px-3 py-2 text-[11px] font-semibold shadow-md transition ${
+            mobileView === "questions"
+              ? "bg-[#292929] text-white"
+              : "text-[#777] hover:bg-[#f5f5f5]"
+          }`}
+        >
+          Question List
+        </button>
 
-      <div className="flex h-[54px] shrink-0 items-center justify-between border-b border-[#e5e5e5] bg-white px-5">
-
-        {/* LEFT SIDE */}
-
-        <div>
-          <p className="text-[11px] font-semibold text-[#292929]">
-            Assessment
-          </p>
-
-          <p className="mt-0.5 text-[9px] text-[#999]">
-            {gradingSummary.gradedCount} of{" "}
-            {gradingSummary.gradingCount} answered
-            questions graded
-          </p>
-        </div>
-
-        {/* RIGHT SIDE */}
-
-        <div className="flex items-center gap-2">
-
-          {/* MARKS */}
-
-          <div className="rounded-full bg-[#f5f5f5] px-3 py-1.5 text-[10px] text-[#666]">
-            {gradingSummary.awardedMarks} /{" "}
-            {gradingSummary.totalMarks}
-          </div>
-
-          {/* PERCENTAGE */}
-
-          <div className="rounded-full bg-[#fff0eb] px-3 py-1.5 text-[10px] font-semibold text-[#ff6337]">
-            {gradingSummary.percentage.toFixed(0)}%
-          </div>
-
-          {/* GRADE ASSESSMENT BUTTON */}
-
-          <button
-            type="button"
-            onClick={() =>
-              setGradingEnabled(
-                (previous) => !previous
-              )
-            }
-            className={`rounded-full px-4 py-2 text-[10px] font-semibold transition-all ${
-              gradingEnabled
-                ? "bg-[#ff6337] text-white hover:bg-[#e9572f]"
-                : "bg-[#292929] text-white hover:bg-[#1f1f1f]"
-            }`}
-          >
-            {gradingEnabled
-              ? "Grading Enabled"
-              : "Grade Assessment"}
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-pressed={mobileView === "answers"}
+          onClick={() => setMobileView("answers")}
+          className={`flex-1 rounded-full px-3 py-2 text-[11px] font-semibold transition ${
+            mobileView === "answers"
+              ? "bg-[#292929] text-white"
+              : "text-[#777] hover:bg-[#f5f5f5]"
+          }`}
+        >
+          Answer Sheet
+        </button>
       </div>
 
       {/* ==========================================
           MAIN WORKSPACE
           ========================================== */}
 
-      <div className="grid min-h-0 flex-1 grid-cols-[500px_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]  mx-2 md:grid-cols-[500px_minmax(0,1fr)] md:grid-rows-none">
 
         {/* ========================================
             QUESTION LIST
             ======================================== */}
 
-        <div className="min-h-0 overflow-hidden border-r border-[#e8e8e8] bg-white">
+        <div className={`${mobileView === "questions" ? "flex" : "hidden"} min-h-0 overflow-hidden border-r rounded-xl shadow-xl border-[#e8e8e8] bg-white md:flex`}>
 
           <QuestionList
             questions={questions}
@@ -428,6 +476,13 @@ export default function AssessmentWorkspace({
             onSelect={handleSelectQuestion}
             gradingResults={gradingResults}
             gradingStatus={gradingStatus}
+            gradingEnabled={gradingEnabled}
+            gradingSummary={gradingSummary}
+            fullGradingStatus={fullGradingStatus}
+            onGradeFullAssessment={gradeFullAssessment}
+            onToggleGrading={() =>
+              setGradingEnabled((previous) => !previous)
+            }
           />
 
         </div>
@@ -436,7 +491,7 @@ export default function AssessmentWorkspace({
             ANSWER SHEET
             ======================================== */}
 
-        <div className="min-h-0 overflow-hidden bg-[#eeeeec]">
+        <div className={`${mobileView === "answers" ? "block" : "hidden"} min-h-0 overflow-hidden bg-[#eeeeec] md:block`}>
 
           <PdfViewer
             file={answerSheet}
@@ -448,5 +503,5 @@ export default function AssessmentWorkspace({
         </div>
       </div>
     </div>
-  );
+  )
 }

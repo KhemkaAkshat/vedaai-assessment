@@ -18,7 +18,7 @@ export default function UploadCard({
   };
 
   return (
-    <div className="relative flex min-h-[40%] items-center justify-center rounded-[15px] border border-dashed border-[#d6d6d6] bg-white px-4 py-4">
+    <div className="relative flex min-h-[130px] items-center justify-center rounded-[15px] border border-dashed border-[#d6d6d6] bg-white px-4 py-4 md:min-h-[40%]">
       {file ? (
         /* ================= FILE SELECTED ================= */
         <div className="flex w-full items-center justify-center">

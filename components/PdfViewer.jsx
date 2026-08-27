@@ -8,6 +8,12 @@ import {
 } from "react";
 
 import {
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+
+import {
   Document,
   Page,
   pdfjs,
@@ -28,6 +34,7 @@ export default function PdfViewer({
 }) {
   const [numPages, setNumPages] = useState(0);
   const [pageWidth, setPageWidth] = useState(650);
+  const [zoom, setZoom] = useState(1);
 
   const viewerRef = useRef(null);
 
@@ -37,8 +44,12 @@ export default function PdfViewer({
 
   useEffect(() => {
     const updateWidth = () => {
+      const isMobile = window.innerWidth < 768;
+
       setPageWidth(
-        Math.min(window.innerWidth * 0.55, 650)
+        isMobile
+          ? Math.max(window.innerWidth - 48, 240)
+          : Math.min(window.innerWidth * 0.55, 650),
       );
     };
 
@@ -137,6 +148,43 @@ export default function PdfViewer({
       ref={viewerRef}
       className="h-full overflow-auto bg-[#eeeeec] p-6"
     >
+      <div className="sticky top-0 z-10 mx-auto mb-4 flex w-fit items-center gap-1 rounded-full border border-[#e2e2e2] bg-white/95 p-1 shadow-sm backdrop-blur">
+        <button
+          type="button"
+          aria-label="Zoom out"
+          disabled={zoom <= 0.75}
+          onClick={() => setZoom((value) => Math.max(0.75, value - 0.25))}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[#555] transition hover:bg-[#f3f3f3] disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          <ZoomOut size={15} />
+        </button>
+
+        <span className="min-w-[42px] text-center text-[10px] font-semibold text-[#666]">
+          {Math.round(zoom * 100)}%
+        </span>
+
+        <button
+          type="button"
+          aria-label="Zoom in"
+          disabled={zoom >= 2}
+          onClick={() => setZoom((value) => Math.min(2, value + 0.25))}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[#555] transition hover:bg-[#f3f3f3] disabled:cursor-not-allowed disabled:opacity-35"
+        >
+          <ZoomIn size={15} />
+        </button>
+
+        <div className="mx-1 h-4 w-px bg-[#e5e5e5]" />
+
+        <button
+          type="button"
+          aria-label="Reset zoom"
+          onClick={() => setZoom(1)}
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[#555] transition hover:bg-[#f3f3f3]"
+        >
+          <RotateCcw size={14} />
+        </button>
+      </div>
+
       <Document
         file={file}
         onLoadSuccess={handleLoadSuccess}
@@ -171,12 +219,12 @@ export default function PdfViewer({
                   }}
                   className="relative bg-white shadow-md"
                   style={{
-                    width: pageWidth,
+                    width: pageWidth * zoom,
                   }}
                 >
                   <Page
                     pageNumber={pageNumber}
-                    width={pageWidth}
+                    width={pageWidth * zoom}
                     renderTextLayer
                     renderAnnotationLayer
                   />

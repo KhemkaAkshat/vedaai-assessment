@@ -12,6 +12,11 @@ export default function QuestionList({
   onSelect,
   gradingResults = {},
   gradingStatus = {},
+  gradingEnabled = false,
+  gradingSummary = {},
+  onToggleGrading,
+  fullGradingStatus = "idle",
+  onGradeFullAssessment,
 }) {
   const [expandedFeedback, setExpandedFeedback] =
     useState({});
@@ -78,8 +83,8 @@ export default function QuestionList({
       ========================================== */}
 
       <div className="shrink-0 border-b border-[#eeeeee] bg-[#f7f7f7] px-5 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <h2 className="text-[13px] font-semibold text-[#292929]">
               Extracted Questions from question
               paper
@@ -91,13 +96,33 @@ export default function QuestionList({
             </p>
           </div>
 
-          <div className="shrink-0 rounded-full bg-white px-3 py-1.5 text-[10px] text-[#777] shadow-sm">
-            {questions.length}
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="rounded-full bg-white px-3 py-1.5 text-[10px] text-[#777] shadow-sm">
+              {gradingSummary.awardedMarks ?? 0} / {gradingSummary.totalMarks ?? 0}
+            </div>
+
+            <button
+              type="button"
+              onClick={onToggleGrading}
+              className={`rounded-full px-3 py-1.5 text-[6px] font-semibold transition-all ${
+                gradingEnabled
+                  ? "bg-[#ff6337] text-white hover:bg-[#e9572f]"
+                  : "bg-[#292929] text-white hover:bg-[#1f1f1f]"
+              }`}
+            >
+              {gradingEnabled
+                ? "Grading Enabled"
+                : "Enable Grading"}
+            </button>
           </div>
         </div>
 
         {mappedCount > 0 && (
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="rounded-full bg-white px-2.5 py-1 text-[9px] text-[#777]">
+              {questions.length} questions
+            </div>
+            
             <div className="rounded-full bg-white px-2.5 py-1 text-[9px] text-[#777]">
               {mappedCount} answered
             </div>
@@ -105,8 +130,32 @@ export default function QuestionList({
             <div className="rounded-full bg-white px-2.5 py-1 text-[9px] text-[#777]">
               {gradedCount} graded
             </div>
+
+            
           </div>
         )}
+
+        <button
+          type="button"
+          onClick={onGradeFullAssessment}
+          disabled={
+            mappedCount === 0 ||
+            fullGradingStatus === "grading" ||
+            fullGradingStatus === "complete"
+          }
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[#292929] px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:bg-[#c5c5c5]"
+        >
+          {fullGradingStatus === "grading" && (
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          )}
+          {fullGradingStatus === "grading"
+            ? "Grading Full Assessment..."
+            : fullGradingStatus === "complete"
+              ? "Full Assessment Graded"
+              : fullGradingStatus === "error"
+                ? "Retry Full Assessment"
+                : "Grade Full Assessment"}
+        </button>
       </div>
 
       {/* ==========================================

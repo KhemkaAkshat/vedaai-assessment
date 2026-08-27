@@ -909,3 +909,169 @@ Return ONLY valid JSON.
     ),
   };
 }
+
+export async function gradeFullAssessment({
+  questions = [],
+  answers = [],
+}) {
+  const normalize = (value) =>
+    value === null || value === undefined
+      ? null
+      : String(value)
+          .trim()
+          .toLowerCase()
+          .replace(/^q/, "")
+          .replace(/\s+/g, "");
+
+  const answerByQuestion = new Map(
+    answers.map((answer) => [
+      normalize(answer.questionNumber),
+      answer,
+    ]),
+  );
+
+  const gradeable = questions
+    .map((question) => ({
+      question,
+      answer: answerByQuestion.get(
+        normalize(question.number),
+      ),
+    }))
+    .filter(
+      ({ answer }) =>
+        answer?.answerText && answer.answerText.trim(),
+    );
+
+  if (!gradeable.length) {
+    return { results: [] };
+  }
+
+  const prompt = `
+You are grading a complete school examination assessment.
+
+Grade each provided student answer against its matching question.
+Use only the provided question and answer data.
+
+Rules:
+- Award partial marks when the work shows partial understanding.
+- Do not invent missing work or information.
+- For mathematics, check method, calculations, final answer, and units.
+- If an answer is blank, award zero.
+- awardedMarks must not exceed maximumMarks.
+- Return one result for every provided question-answer pair.
+- Keep question numbers exactly as provided.
+- Feedback must be concise.
+- confidence must be between 0 and 1.
+
+ASSESSMENT DATA:
+${JSON.stringify(
+  gradeable.map(({ question, answer }) => ({
+    questionNumber: question.number,
+    question: question.text,
+    maximumMarks: question.marks ?? null,
+    studentAnswer: answer.answerText,
+  })),
+  null,
+  2,
+)}
+
+Return only valid JSON.
+`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.6-flash",
+    contents: [{ text: prompt }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "object",
+        properties: {
+          results: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                questionNumber: {
+                  type: "string",
+                },
+                maximumMarks: {
+                  type: "number",
+                },
+                awardedMarks: {
+                  type: "number",
+                },
+                isCorrect: {
+                  type: "boolean",
+                },
+                feedback: {
+                  type: "string",
+                },
+                confidence: {
+                  type: "number",
+                },
+              },
+              required: [
+                "questionNumber",
+                "maximumMarks",
+                "awardedMarks",
+                "isCorrect",
+                "feedback",
+                "confidence",
+              ],
+            },
+          },
+        },
+        required: ["results"],
+      },
+    },
+  });
+
+  const parsed = JSON.parse(response.text);
+  const questionsByNumber = new Map(
+    gradeable.map(({ question }) => [
+      normalize(question.number),
+      question,
+    ]),
+  );
+
+  const results = (parsed.results || [])
+    .map((result) => {
+      const question = questionsByNumber.get(
+        normalize(result.questionNumber),
+      );
+
+      if (!question) return null;
+
+      const maximumMarks = Number(question.marks) || 0;
+      let awardedMarks = Math.max(
+        0,
+        Number(result.awardedMarks) || 0,
+      );
+
+      if (maximumMarks > 0) {
+        awardedMarks = Math.min(
+          awardedMarks,
+          maximumMarks,
+        );
+      }
+
+      return {
+        questionNumber: question.number,
+        maximumMarks,
+        awardedMarks,
+        isCorrect:
+          maximumMarks > 0
+            ? awardedMarks === maximumMarks
+            : Boolean(result.isCorrect),
+        feedback:
+          result.feedback || "No feedback provided.",
+        confidence: Math.min(
+          1,
+          Math.max(0, Number(result.confidence) || 0),
+        ),
+      };
+    })
+    .filter(Boolean);
+
+  return { results };
+}

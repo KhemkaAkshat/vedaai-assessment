@@ -1085,7 +1085,6 @@ function page() {
         // selectedQuestion={2}
         // onSelectQuestion={setSelectedQuestion}
       />
-      ;
     </div>
   );
 }
