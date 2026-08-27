@@ -722,3 +722,190 @@ Return only the structured JSON.
 
   return JSON.parse(response.text);
 }
+export async function gradeAnswer({
+  question,
+  answer,
+}) {
+  if (!question) {
+    throw new Error("Question is required.");
+  }
+
+  if (!answer) {
+    throw new Error("Answer is required.");
+  }
+
+  const prompt = `
+You are grading a student's answer to an examination question.
+
+Your task is to evaluate ONLY the student's answer against the provided question.
+
+Do not invent information.
+
+Do not assume work that the student has not shown.
+
+Give partial marks when the student demonstrates partial understanding.
+
+========================================
+QUESTION
+========================================
+
+Question number:
+${question.number}
+
+Question:
+${question.text}
+
+Maximum marks:
+${question.marks ?? "Not specified"}
+
+========================================
+STUDENT ANSWER
+========================================
+
+${answer.answerText || "[No answer text extracted]"}
+
+========================================
+GRADING RULES
+========================================
+
+1. Evaluate the student's actual answer.
+
+2. Compare the answer with what the question asks.
+
+3. Award marks based on the quality and correctness of the student's work.
+
+4. Give partial marks when appropriate.
+
+5. Do not award marks for an answer that is merely plausible if the required reasoning is missing.
+
+6. For mathematics:
+   - Check the method.
+   - Check calculations.
+   - Check the final answer.
+   - Give partial credit for correct intermediate work.
+
+7. For science:
+   - Check concepts.
+   - Check equations/formulas.
+   - Check calculations.
+   - Check units where applicable.
+
+8. If the question contains OR alternatives, grade only the alternative answered by the student.
+
+9. Do not penalize handwriting extraction issues unless the answer itself is genuinely impossible to understand.
+
+10. Do not invent missing steps.
+
+11. If the answer is blank or clearly unanswered:
+    awardedMarks = 0.
+
+12. awardedMarks MUST NOT exceed maximumMarks.
+
+13. Return concise feedback explaining why the marks were awarded.
+
+14. Return a confidence score between 0 and 1.
+
+========================================
+OUTPUT
+========================================
+
+Return ONLY valid JSON.
+`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.6-flash",
+
+    contents: [
+      {
+        text: prompt,
+      },
+    ],
+
+    config: {
+      responseMimeType: "application/json",
+
+      responseSchema: {
+        type: "object",
+
+        properties: {
+          questionNumber: {
+            type: "string",
+          },
+
+          maximumMarks: {
+            type: "number",
+          },
+
+          awardedMarks: {
+            type: "number",
+          },
+
+          isCorrect: {
+            type: "boolean",
+          },
+
+          feedback: {
+            type: "string",
+          },
+
+          confidence: {
+            type: "number",
+          },
+        },
+
+        required: [
+          "questionNumber",
+          "maximumMarks",
+          "awardedMarks",
+          "isCorrect",
+          "feedback",
+          "confidence",
+        ],
+      },
+    },
+  });
+
+  const result = JSON.parse(response.text);
+
+  // Safety validation
+  const maximumMarks =
+    Number(question.marks) || 0;
+
+  let awardedMarks =
+    Number(result.awardedMarks) || 0;
+
+  // Never allow negative marks
+  awardedMarks = Math.max(0, awardedMarks);
+
+  // Never allow more than maximum marks
+  if (maximumMarks > 0) {
+    awardedMarks = Math.min(
+      awardedMarks,
+      maximumMarks
+    );
+  }
+
+  return {
+    questionNumber: question.number,
+
+    maximumMarks,
+
+    awardedMarks,
+
+    isCorrect:
+      maximumMarks > 0
+        ? awardedMarks === maximumMarks
+        : Boolean(result.isCorrect),
+
+    feedback:
+      result.feedback || "No feedback provided.",
+
+    confidence: Math.min(
+      1,
+      Math.max(
+        0,
+        Number(result.confidence) || 0
+      )
+    ),
+  };
+}
