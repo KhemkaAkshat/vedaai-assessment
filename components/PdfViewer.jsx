@@ -148,7 +148,9 @@ export default function PdfViewer({
       ref={viewerRef}
       className="h-full overflow-auto bg-[#eeeeec] p-6"
     >
-      <div className="sticky top-0 z-10 mx-auto mb-4 flex w-fit items-center gap-1 rounded-full border border-[#e2e2e2] bg-white/95 p-1 shadow-sm backdrop-blur">
+      <div className="sticky top-0 z-10 mx-auto mb-4 flex w-fit items-center gap-1 rounded-full border border-[#e2e2e2] p-1 shadow-sm backdrop-blur">
+        
+
         <button
           type="button"
           aria-label="Zoom out"
@@ -199,7 +201,7 @@ export default function PdfViewer({
           </div>
         }
       >
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-4 ">
 
           {Array.from(
             { length: numPages },

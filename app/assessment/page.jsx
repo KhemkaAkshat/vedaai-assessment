@@ -2,6 +2,10 @@ import AssessmentWorkspace from "@/components/AssessmentWorkspace";
 
 import React from "react";
 
+// Test-only route: keep the assessment fixture local so refreshes do not
+// trigger PDF extraction or consume Gemini quota.
+export const dynamic = "force-static";
+
 function page() {
   const answers = [
     {
@@ -1081,7 +1085,7 @@ function page() {
       <AssessmentWorkspace
         questions={questions}
         answers={answers}
-        // answerSheet={answerSheet}
+        answerSheet={null}
         // selectedQuestion={2}
         // onSelectQuestion={setSelectedQuestion}
       />

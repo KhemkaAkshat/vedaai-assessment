@@ -957,6 +957,9 @@ Rules:
 - Do not invent missing work or information.
 - For mathematics, check method, calculations, final answer, and units.
 - If an answer is blank, award zero.
+- If a question contains OR or अथवा alternatives, grade only the alternative
+  attempted by the student and ignore the unattempted alternative.
+- Treat all OR alternatives as one question and award its marks only once.
 - awardedMarks must not exceed maximumMarks.
 - Return one result for every provided question-answer pair.
 - Keep question numbers exactly as provided.

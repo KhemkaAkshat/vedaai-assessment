@@ -12,9 +12,7 @@ export default function QuestionList({
   onSelect,
   gradingResults = {},
   gradingStatus = {},
-  gradingEnabled = false,
   gradingSummary = {},
-  onToggleGrading,
   fullGradingStatus = "idle",
   onGradeFullAssessment,
 }) {
@@ -103,16 +101,21 @@ export default function QuestionList({
 
             <button
               type="button"
-              onClick={onToggleGrading}
-              className={`rounded-full px-3 py-1.5 text-[6px] font-semibold transition-all ${
-                gradingEnabled
-                  ? "bg-[#ff6337] text-white hover:bg-[#e9572f]"
-                  : "bg-[#292929] text-white hover:bg-[#1f1f1f]"
-              }`}
+              onClick={onGradeFullAssessment}
+              disabled={
+                mappedCount === 0 ||
+                fullGradingStatus === "grading" ||
+                fullGradingStatus === "complete"
+              }
+              className="rounded-full bg-[#292929] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:bg-[#c5c5c5]"
             >
-              {gradingEnabled
-                ? "Grading Enabled"
-                : "Enable Grading"}
+              {fullGradingStatus === "grading"
+                ? "Grading..."
+                : fullGradingStatus === "complete"
+                  ? "Graded"
+                  : fullGradingStatus === "error"
+                    ? "Retry Grading"
+                    : "Grade Full Assessment"}
             </button>
           </div>
         </div>
@@ -135,27 +138,6 @@ export default function QuestionList({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={onGradeFullAssessment}
-          disabled={
-            mappedCount === 0 ||
-            fullGradingStatus === "grading" ||
-            fullGradingStatus === "complete"
-          }
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[#292929] px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:bg-[#c5c5c5]"
-        >
-          {fullGradingStatus === "grading" && (
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-          )}
-          {fullGradingStatus === "grading"
-            ? "Grading Full Assessment..."
-            : fullGradingStatus === "complete"
-              ? "Full Assessment Graded"
-              : fullGradingStatus === "error"
-                ? "Retry Full Assessment"
-                : "Grade Full Assessment"}
-        </button>
       </div>
 
       {/* ==========================================
@@ -249,9 +231,9 @@ export default function QuestionList({
                     {/* NUMBER */}
 
                     <div
-                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold ${
+                      className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-md font-semibold border-3 border-gray-500 ${
                         isSelected
-                          ? "bg-[#ff6337] text-white"
+                          ? "bg-[#ff6337] border-orange-500 text-white"
                           : "bg-[#555] text-white"
                       }`}
                     >

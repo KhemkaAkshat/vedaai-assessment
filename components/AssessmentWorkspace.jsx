@@ -35,15 +35,8 @@ export default function AssessmentWorkspace({
 
   const [gradingStatus, setGradingStatus] = useState({});
 
-  /*
-   * Grading is OFF initially.
-   *
-   * Once the user clicks "Grade Assessment",
-   * clicking a question will grade only that
-   * particular question.
-   */
-  const [gradingEnabled, setGradingEnabled] =
-    useState(false);
+  /* Grading is enabled as soon as the assessment opens. */
+  const gradingEnabled = true;
 
   const [fullGradingStatus, setFullGradingStatus] =
     useState("idle");
@@ -476,13 +469,9 @@ export default function AssessmentWorkspace({
             onSelect={handleSelectQuestion}
             gradingResults={gradingResults}
             gradingStatus={gradingStatus}
-            gradingEnabled={gradingEnabled}
             gradingSummary={gradingSummary}
             fullGradingStatus={fullGradingStatus}
             onGradeFullAssessment={gradeFullAssessment}
-            onToggleGrading={() =>
-              setGradingEnabled((previous) => !previous)
-            }
           />
 
         </div>
