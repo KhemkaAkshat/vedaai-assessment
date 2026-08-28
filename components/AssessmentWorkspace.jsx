@@ -427,7 +427,7 @@ export default function AssessmentWorkspace({
           type="button"
           aria-pressed={mobileView === "questions"}
           onClick={() => setMobileView("questions")}
-          className={`flex-1 rounded-full px-3 py-2 text-[11px] font-semibold shadow-md transition ${
+          className={`flex-1 rounded-full px-3 py-2 text-[11px] font-semibold transition ${
             mobileView === "questions"
               ? "bg-[#292929] text-white"
               : "text-[#777] hover:bg-[#f5f5f5]"
@@ -480,7 +480,7 @@ export default function AssessmentWorkspace({
             ANSWER SHEET
             ======================================== */}
 
-        <div className={`${mobileView === "answers" ? "block" : "hidden"} min-h-0 overflow-hidden bg-[#eeeeec] md:block`}>
+        <div className={`${mobileView === "answers" ? "block" : "hidden"} min-h-0 overflow-hidden md:block`}>
 
           <PdfViewer
             file={answerSheet}

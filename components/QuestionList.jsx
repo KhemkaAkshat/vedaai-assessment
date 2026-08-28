@@ -80,22 +80,24 @@ export default function QuestionList({
           HEADER
       ========================================== */}
 
-      <div className="shrink-0 border-b border-[#eeeeee] bg-[#f7f7f7] px-5 py-4">
+      <div className="shrink-0 border-b border-[#eeeeee] bg-[#f7f7f7] px-3 py-2 md:px-5 md:py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h2 className="text-[13px] font-semibold text-[#292929]">
-              Extracted Questions from question
-              paper
+            <h2 className="text-[11px] font-semibold text-[#292929] md:text-[13px]">
+              <span className="md:hidden">Extracted Questions</span>
+              <span className="hidden md:inline">
+                Extracted Questions from question paper
+              </span>
             </h2>
 
-            <p className="mt-1 text-[10px] text-[#999]">
+            <p className="mt-1 hidden text-[10px] text-[#999] md:block">
               Select a question to review its
               answer
             </p>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <div className="rounded-full bg-white px-3 py-1.5 text-[10px] text-[#777] shadow-sm">
+            <div className="rounded-full bg-white px-2 py-1 text-[9px] text-[#777] shadow-sm md:px-3 md:py-1.5 md:text-[10px]">
               {gradingSummary.awardedMarks ?? 0} / {gradingSummary.totalMarks ?? 0}
             </div>
 
@@ -107,30 +109,41 @@ export default function QuestionList({
                 fullGradingStatus === "grading" ||
                 fullGradingStatus === "complete"
               }
-              className="rounded-full bg-[#292929] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:bg-[#c5c5c5]"
+              className="rounded-full bg-[#292929] px-1.5 py-0.5 text-[8px] font-semibold text-white transition hover:bg-[#1f1f1f] disabled:cursor-not-allowed disabled:bg-[#c5c5c5] md:px-3 md:py-1.5 md:text-[10px]"
             >
-              {fullGradingStatus === "grading"
-                ? "Grading..."
-                : fullGradingStatus === "complete"
-                  ? "Graded"
-                  : fullGradingStatus === "error"
-                    ? "Retry Grading"
-                    : "Grade Full Assessment"}
+              <span className="md:hidden">
+                {fullGradingStatus === "grading"
+                  ? "Grading..."
+                  : fullGradingStatus === "complete"
+                    ? "Graded"
+                    : fullGradingStatus === "error"
+                      ? "Retry"
+                      : "Grade Full"}
+              </span>
+              <span className="hidden md:inline">
+                {fullGradingStatus === "grading"
+                  ? "Grading..."
+                  : fullGradingStatus === "complete"
+                    ? "Graded"
+                    : fullGradingStatus === "error"
+                      ? "Retry Grading"
+                      : "Grade Full Assessment"}
+              </span>
             </button>
           </div>
         </div>
 
         {mappedCount > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <div className="rounded-full bg-white px-2.5 py-1 text-[9px] text-[#777]">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 md:mt-3 md:gap-2">
+            <div className="rounded-full bg-white px-2 py-1 text-[9px] text-[#777] md:px-2.5">
               {questions.length} questions
             </div>
             
-            <div className="rounded-full bg-white px-2.5 py-1 text-[9px] text-[#777]">
+            <div className="rounded-full bg-white px-2 py-1 text-[9px] text-[#777] md:px-2.5">
               {mappedCount} answered
             </div>
 
-            <div className="rounded-full bg-white px-2.5 py-1 text-[9px] text-[#777]">
+            <div className="rounded-full bg-white px-2 py-1 text-[9px] text-[#777] md:px-2.5">
               {gradedCount} graded
             </div>
 
@@ -144,8 +157,8 @@ export default function QuestionList({
           QUESTION LIST
       ========================================== */}
 
-      <div className="question-list-scroll min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        <div className="space-y-2.5">
+      <div className="question-list-scroll min-h-0 flex-1 overflow-y-auto px-2 py-2 md:px-4 md:py-3">
+        <div className="space-y-2 md:space-y-2.5">
           {questions.map((question, index) => {
             const questionNumber =
               question.number;
@@ -225,7 +238,7 @@ export default function QuestionList({
                   onClick={() =>
                     onSelect(questionNumber)
                   }
-                  className="w-full p-3.5 text-left transition-all hover:bg-[#fafafa]"
+                  className="w-full p-2.5 text-left transition-all hover:bg-[#fafafa] md:p-3.5"
                 >
                   <div className="flex items-start gap-3">
                     {/* NUMBER */}

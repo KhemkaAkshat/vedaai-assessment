@@ -27,7 +27,7 @@ export default function Header() {
         {/* Mobile logo */}
         <div className="md:hidden">
           <Image
-            src="/images/logo.png"
+            src="/images/Logo.png"
             alt="VedaAI"
             width={74}
             height={28}

@@ -21,7 +21,7 @@ export default function Sidebar({ collapsed = false, onToggle }) {
         <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"}`}>
           <div className="flex items-center justify-center gap-2">
             <Image
-              src="/images/logo.png"
+              src="/images/Logo.png"
               alt="VedaAI"
               width={100}
               height={100}

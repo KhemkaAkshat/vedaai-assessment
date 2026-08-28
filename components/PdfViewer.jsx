@@ -146,7 +146,7 @@ export default function PdfViewer({
   return (
     <div
       ref={viewerRef}
-      className="h-full overflow-auto bg-[#eeeeec] p-6"
+      className="h-full overflow-auto p-6"
     >
       <div className="sticky top-0 z-10 mx-auto mb-4 flex w-fit items-center gap-1 rounded-full border border-[#e2e2e2] p-1 shadow-sm backdrop-blur">
         
